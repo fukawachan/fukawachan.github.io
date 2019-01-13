@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="google" content="notranslate">
     <meta name="keywords" content="复川,"> 
-    <meta name="description" content="从心所欲 不逾矩,"> 
+    <meta name="description" content="从心所欲 不逾矩,之前我们了解了单个神经元的方式来进行二维数据的回归拟合。单个神经元的使用较为简单，但有一个缺点，就是拟合出的结果是线性的，而我们需要深度学习的很多问题光靠线性问题解决不了，比如多分类问题，这个时候就,"> 
     <meta name="author" content="复川"> 
     <link rel="alternative" href="atom.xml" title="复川の无名小站" type="application/atom+xml"> 
     <link rel="icon" href="/img/favicon.ico"> 
@@ -26,7 +26,7 @@
     <div class="bar" style="width: 0;"></div>
     <a class="icon-home image-icon" href="javascript:;"></a>
     <div title="播放/暂停" class="icon-play"></div>
-    <h3 class="subtitle">Hello World</h3>
+    <h3 class="subtitle">tensorflow学习笔记6</h3>
     <div class="social">
         <!--<div class="like-icon">-->
             <!--<a href="javascript:;" class="likeThis active"><span class="icon-like"></span><span class="count">76</span></a>-->
@@ -43,23 +43,62 @@
     <div class="section">
         <div class="article">
     <div class="main">
-        <h1 class="title">Hello World</h1>
+        <h1 class="title">tensorflow学习笔记6</h1>
         <div class="stuff">
-            <span>一月 12, 2019</span>
+            <span>八月 01, 2018</span>
             
+  <ul class="post-tags-list"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/tensorflow/">tensorflow</a></li></ul>
+
 
         </div>
         <div class="content markdown">
-            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+            <p>之前我们了解了单个神经元的方式来进行二维数据的回归拟合。单个神经元的使用较为简单，但有一个缺点，就是拟合出的结果是线性的，而我们需要深度学习的很多问题光靠线性问题解决不了，比如多分类问题，这个时候就需要多层神经网络。</p>
+<p>多层神经网络更类似我们熟知的那种神经网络，包括输入层、隐藏层和输出层。接下来我们就用一个亦或操作来进行实战。</p>
+<h2 id="什么是亦或操作？"><a href="#什么是亦或操作？" class="headerlink" title="什么是亦或操作？"></a>什么是亦或操作？</h2><p>简单的来说，就是两个数一样，就输出0，不一样的时候就输出1.表示为两类数据时，就是（0,0）和(1,1)为一类，(1,0)和(0,1)为一类。</p>
+<h2 id="定义变量"><a href="#定义变量" class="headerlink" title="定义变量"></a>定义变量</h2><p>接下来我们开始编写代码。</p>
+<pre><code>import tensorflow as tf
+import numpy as np
 
+learning_rate = 1e-4
+n_input = 2 #输入层节点个数
+n_label = 1 
+n_hidden = 2 #隐藏层节点个数
+
+x = tf.placeholder(tf.float32, [None,n_input])
+y = tf.placeholder(tf.float32, [None,n_label])
+</code></pre><p><img src="tensorflow学习笔记6/1.png" alt="alt text" title="神经网络模型"></p>
+<h2 id="定义学习参数"><a href="#定义学习参数" class="headerlink" title="定义学习参数"></a>定义学习参数</h2><p>这里由于参数较多，所以通过字典的形式来定义权重w和偏差b。h1代表隐藏层，h2代表输出层。</p>
+<pre><code>weights = {
+    &apos;h1&apos;: tf.Varible(tf.truncated_normal([n_input,n_hidden],stddev=0.1)),
+    &apos;h2&apos;: tf.Varible(tf.truncated_normal([n_input,n_label],stddev=0.1))
+}
+
+biases = {
+    &apos;h1&apos;: tf.Varible(tf.zeros([n_hidden])),
+    &apos;h2&apos;: tf.Varible(tf.zeros([n_label]))
+}
+</code></pre><h2 id="定义网络模型"><a href="#定义网络模型" class="headerlink" title="定义网络模型"></a>定义网络模型</h2><p>在该例中，模型的正向结构入口为x，经过与第一层的w相乘再加上b，通过Relu函数进行激活转换，最终生成layer_1,再将layer_1带入到第二层，使用Tanh函数激活生成最终的输出y_pred.</p>
+<pre><code>layer_1 = tf.nn.relu(tf.add(tf.matmul(x, weight[&apos;h1&apos;])), biases[&apos;h1&apos;])
+y_pred = tf.nn.tanh(tf.add(tf.mattmul(layer_1, weights[&apos;h2&apos;]), bisaes[&apos;h2&apos;]))
+
+loss = tf.reduce_mean((y_pred - y)**2)
+train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+</code></pre><h2 id="构建模拟数据"><a href="#构建模拟数据" class="headerlink" title="构建模拟数据"></a>构建模拟数据</h2><pre><code># 生成数据
+X = [[0,0],[0,1],[1,0],[1,1]]
+Y = [[0],[1],[1],[0]]
+X = np.array(X).astype(&apos;float32&apos;)
+Y = np.array(Y).astype(&apos;int16&apos;)
+</code></pre><p>手动建立X和Y的数据集，形成对应的亦或关系。</p>
+<h2 id="运行Session，生成结果"><a href="#运行Session，生成结果" class="headerlink" title="运行Session，生成结果"></a>运行Session，生成结果</h2><pre><code># 加载session()
+sess = tf.InteractiveSession()
+sess.run(tf.global_variable_initializer())
+# 训练
+for i in range(10000):
+    sess.run(train_step,feed_dict={x:X,y:Y})
+# 计算预测值
+print(sess.run(y_pred,feed_dict={x:X}))
+# 输出结果
+</code></pre>
             <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
             <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="true">
                 <source type="audio/mpeg" src="">
@@ -79,7 +118,7 @@
     </div>
     
         <div class="side">
-            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Quick-Start"><span class="toc-number">1.</span> <span class="toc-text">Quick Start</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Create-a-new-post"><span class="toc-number">1.1.</span> <span class="toc-text">Create a new post</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Run-server"><span class="toc-number">1.2.</span> <span class="toc-text">Run server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Generate-static-files"><span class="toc-number">1.3.</span> <span class="toc-text">Generate static files</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Deploy-to-remote-sites"><span class="toc-number">1.4.</span> <span class="toc-text">Deploy to remote sites</span></a></li></ol></li></ol>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是亦或操作？"><span class="toc-number">1.</span> <span class="toc-text">什么是亦或操作？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#定义变量"><span class="toc-number">2.</span> <span class="toc-text">定义变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#定义学习参数"><span class="toc-number">3.</span> <span class="toc-text">定义学习参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#定义网络模型"><span class="toc-number">4.</span> <span class="toc-text">定义网络模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构建模拟数据"><span class="toc-number">5.</span> <span class="toc-text">构建模拟数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#运行Session，生成结果"><span class="toc-number">6.</span> <span class="toc-text">运行Session，生成结果</span></a></li></ol>
         </div>
     
 </div>
