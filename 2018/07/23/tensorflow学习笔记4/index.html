@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+  <script>
+  (function(i,s,o,g,r,a,m){i["DaoVoiceObject"]=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;a.charset="utf-8";m.parentNode.insertBefore(a,m)})(window,document,"script",('https:' == document.location.protocol ? 'https:' : 'http:') + "//widget.daovoice.io/widget/0f81ff2f.js","daovoice")
+  daovoice('init', {
+      app_id: "26d0e4f4"
+    });
+  daovoice('update');
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="tensorflow,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="到目前为止，我们已经看到两种类型的「无祖先」节点（no-ancestor node）：每次运行都一样的 tf.constant 和每次运行都不一样的 tf.placeholder。但是，在实际操作中，我们需要考虑第三种情况：一个通常在运行时保持值不变的节点也可以被更新为新值。 这个时候，就需要引入「变量」">
+<meta name="keywords" content="tensorflow">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tensorflow学习笔记4：变量、变量共享">
+<meta property="og:url" content="http://yoursite.com/2018/07/23/tensorflow学习笔记4/index.html">
+<meta property="og:site_name" content="复川の无名小站">
+<meta property="og:description" content="到目前为止，我们已经看到两种类型的「无祖先」节点（no-ancestor node）：每次运行都一样的 tf.constant 和每次运行都不一样的 tf.placeholder。但是，在实际操作中，我们需要考虑第三种情况：一个通常在运行时保持值不变的节点也可以被更新为新值。 这个时候，就需要引入「变量」">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/07/23/tensorflow学习笔记4/1.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/23/tensorflow学习笔记4/2.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/23/tensorflow学习笔记4/3.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/23/tensorflow学习笔记4/4.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/23/tensorflow学习笔记4/5.png">
+<meta property="og:updated_time" content="2018-07-24T00:19:38.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="tensorflow学习笔记4：变量、变量共享">
+<meta name="twitter:description" content="到目前为止，我们已经看到两种类型的「无祖先」节点（no-ancestor node）：每次运行都一样的 tf.constant 和每次运行都不一样的 tf.placeholder。但是，在实际操作中，我们需要考虑第三种情况：一个通常在运行时保持值不变的节点也可以被更新为新值。 这个时候，就需要引入「变量」">
+<meta name="twitter:image" content="http://yoursite.com/2018/07/23/tensorflow学习笔记4/1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":10,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/07/23/tensorflow学习笔记4/">
+
+
+
+
+
+  <title>tensorflow学习笔记4：变量、变量共享 | 复川の无名小站</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?7f1266189d503279dc6506c498ff58d6";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+	<a href="https://github.com/fukawachan/fukawachan.github.io"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">复川の无名小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/07/23/tensorflow学习笔记4/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="复川">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="复川の无名小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">tensorflow学习笔记4：变量、变量共享</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-23T19:06:14+08:00">
+                2018-07-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/深度学习/" itemprop="url" rel="index">
+                    <span itemprop="name">深度学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>到目前为止，我们已经看到两种类型的「无祖先」节点（no-ancestor node）：每次运行都一样的 tf.constant 和每次运行都不一样的 tf.placeholder。但是，在实际操作中，我们需要考虑第三种情况：一个通常在运行时保持值不变的节点也可以被更新为新值。</p>
+<p>这个时候，就需要引入「变量」<br><a id="more"></a></p>
+<h2 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h2><p>变量对于使用 TensorFlow 进行深度学习是非常重要的，因为模型的参数就是变量。在训练期间，我们会希望通过梯度下降在每个步骤更新参数；但在评估模型的时候，我们就要这些参数保持不变，并将大量不同的测试集输入模型。通常，模型所有可训练参数都是变量。</p>
+<p>要创建变量，就需要使用 tf.get_variable()。tf.get_variable() 的前两个参数是必需的，其余参数是可选的。这两个参数分别是 name 和 shape 。name 是一个唯一标识这个变量对象的字符串。它必须相对于全局图是唯一的，所以要明了你使用过的所有命名，确保没有重复。shape 是与张量形状对应的整数数组，它的语法非常直观：按顺序，每个维度只有一个整数。例如，一个 3x8 矩阵形状是 [3, 8]。要创建一个标量，就需要使用形状为 [] 的空列表。</p>
+<p>我们看下面这段代码：</p>
+<pre><code>import tensorflow as tf
+count_variable = tf.get_variable(&quot;count&quot;, [])
+sess = tf.Session()
+print(sess.run(count_variable))
+</code></pre><p>输出结果：</p>
+<pre><code>Traceback (most recent call last):
+...
+tensorflow.python.framework.errors_impl.FailedPreconditionError: Attempting to use uninitialized value count
+[[Node: _retval_count_0_0 = _Retval[T=DT_FLOAT, index=0, _device=&quot;/job:localhost/replica:0/task:0/device:CPU:0&quot;](count)]]
+</code></pre><p><img src="/2018/07/23/tensorflow学习笔记4/1.png" alt="alt text" title="计算图1"></p>
+<p>我们可以看到，又出现异常了。当我们首次创建变量节点时，它的值基本上是「null」，所以试图对它进行求值的操作都会引发这个异常。我们只能在将值放入变量之后才能对其求值。主要有两种将值放入变量的方法：初始化器和 tf.assign()。</p>
+<h3 id="tf-assigh"><a href="#tf-assigh" class="headerlink" title="tf.assigh()"></a>tf.assigh()</h3><p>我们先看看 tf.assign()：</p>
+<pre><code>import tensorflow as tf
+count_variable = tf.get_variable(&quot;count&quot;, [])
+zero_node = tf.constant(0.)
+assign_node = tf.assign(count_variable, zero_node)
+sess = tf.Session()
+sess.run(assign_node)
+print sess.run(count_variable)
+</code></pre><p>输出：</p>
+<pre><code>0
+</code></pre><p><img src="/2018/07/23/tensorflow学习笔记4/2.png" alt="alt text" title="计算图2"></p>
+<p>和其它节点相比，tf.assign(target, value) 具备一些独特属性：</p>
+<ul>
+<li>恒等运算。tf.assign(target, value) 不做任何计算，通常与 value 相等，只进行赋值。</li>
+<li>副作用。当计算「流经」assign_node 时，副作用发生在图中的其他节点上。此时，副作用是用存储在 zero_node 中的值替换 count_variable 的值。</li>
+<li>非依赖边。即使 count_variable 节点和 assign_node 在图中是相连的，但它们彼此独立。这意味着计算任一节点时，计算不会通过边回流。然而，assign_node 依赖于 zero_node，它需要知道分配了什么。</li>
+</ul>
+<p>「副作用」节点支撑着大部分 Tensorflow 深度学习工作流程，当我们调用 sess.run(assign_node) 时，计算路径会通过 assign_node 和 zero_node。</p>
+<p><img src="/2018/07/23/tensorflow学习笔记4/3.png" alt="alt text" title="计算图3"></p>
+<p>如图中绿色部分所示.当计算流经图中的任何节点时，它还会执行由该节点控制的副作用。由于 tf.assign 的特殊副作用，与 count_variable（之前为「null」）关联的内存现在被永久设置为 0。这意味着当我们下一次调用 sess.run(count_variable) 时，不会引发任何异常。相反，我们会得到 0 值。</p>
+<h3 id="初始化器"><a href="#初始化器" class="headerlink" title="初始化器"></a>初始化器</h3><p>接下来，让我们看看初始化器：</p>
+<pre><code>import tensorflow as tf
+const_init_node = tf.constant_initializer(0.)
+count_variable = tf.get_variable(&quot;count&quot;, [], initializer=const_init_node)
+sess = tf.Session()
+print sess.run([count_variable])
+</code></pre><p>输出结果：</p>
+<pre><code>Traceback (most recent call last):
+...
+tensorflow.python.framework.errors_impl.FailedPreconditionError: Attempting to use uninitialized value count
+[[Node: _retval_count_0_0 = _Retval[T=DT_FLOAT, index=0, _device=&quot;/job:localhost/replica:0/task:0/device:CPU:0&quot;](count)]]
+</code></pre><p><img src="/2018/07/23/tensorflow学习笔记4/4.png" alt="alt text" title="计算图4"></p>
+<p>出了什么问题？为什么初始化器不工作？</p>
+<p>问题出在<strong>会话和图之间的分离</strong>。我们已将 get_variable 的 initializer 属性设置为指向 const_init_node，但它只是在图中的节点之间添加了一个新的连接。但是，与变量节点（存储在会话中，而不是计算图中）相关联的内存仍然设置为「null」。我们需要通过会话使 const_init_node 去更新变量。</p>
+<pre><code>import tensorflow as tf
+const_init_node = tf.constant_initializer(0.)
+count_variable = tf.get_variable(&quot;count&quot;, [], initializer=const_init_node)
+init = tf.global_variables_initializer()
+sess = tf.Session()
+sess.run(init)
+print sess.run(count_variable)
+</code></pre><p>输出：</p>
+<pre><code>0
+</code></pre><p><img src="/2018/07/23/tensorflow学习笔记4/5.png" alt="alt text" title="计算图5"></p>
+<p>我们添加另一个特殊的节点： init = tf.global_variables_initializer()。与 tf.assign() 类似，这是一个带有副作用的节点。，是我们不需要指定它的输入是什么。tf.global_variables_initializer() 将在其创建时查看全局图并自动将依赖关系添加到图中的每个 tf.initializer。当我们在之后使用 sess.run(init) 对它求值时，它会告诉每个初始化程序执行变量初始化，并允许我们运行 sess.run(count_variable) 而不出错。</p>
+<h2 id="变量共享"><a href="#变量共享" class="headerlink" title="变量共享"></a>变量共享</h2><p>我们在进行深度学习时可能会遇到带有变量共享的 Tensorflow 代码，其涉及创建作用域并设置「reuse = True」。由于这一块比较复杂，我也了解地不是特别清楚，所以我建议尽量不要使用变量共享。如果你想在多个地方使用单个变量，只需以编程方式记录指向该变量节点的指针，并在需要时重新使用它。换言之，对于想要保存在内存中的每个变量，你只需要调用一次 tf.get_variable()。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/tensorflow/" rel="tag"><i class="fa fa-tag"></i> tensorflow</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/07/22/2018-7-三下乡/" rel="next" title="2018.7 三下乡">
+                <i class="fa fa-chevron-left"></i> 2018.7 三下乡
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/07/25/tensorflow学习笔记5/" rel="prev" title="tensorflow学习笔记5：逻辑回归拟合二维数据">
+                tensorflow学习笔记5：逻辑回归拟合二维数据 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNzczNi8xNDI2Nw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="复川">
+            
+              <p class="site-author-name" itemprop="name">复川</p>
+              <p class="site-description motion-element" itemprop="description">从心所欲 不逾矩</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                来看看嘛 (ฅ´ω`ฅ)
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://fukawa.top/2018/07/11/%E7%94%A8-hexo-github-%E6%9E%84%E5%BB%BA%E8%87%AA%E5%B7%B1%E7%9A%84%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" title="建站小记" target="_blank">建站小记</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#变量"><span class="nav-number">1.</span> <span class="nav-text">变量</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#tf-assigh"><span class="nav-number">1.1.</span> <span class="nav-text">tf.assigh()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#初始化器"><span class="nav-number">1.2.</span> <span class="nav-text">初始化器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#变量共享"><span class="nav-number">2.</span> <span class="nav-text">变量共享</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; 2018 &mdash; <span itemprop="copyrightYear">2019</span>
+  <!--<span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">复川</span>
+-->
+&nbsp;
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  本站总访问量<span id="busuanzi_value_site_uv"></span>次
+</span>
+</div>
+
+  
+</div>
+
+<span>　<i class="fa fa-bomb"></i></span>
+<span id="showDays"></span>
+
+
+
+&nbsp;
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+
+
+
+
+
+<script>
+  var seconds = 1000;
+  var minutes = seconds * 60;
+  var hours = minutes * 60;
+  var days = hours * 24;
+  var years = days * 365;
+  var birthDay = Date.UTC(2018,6,28,19,00,00); // 这里设置建站时间
+  setInterval(function() {
+    var today = new Date();
+    var todayYear = today.getFullYear();
+    var todayMonth = today.getMonth()+1;
+    var todayDate = today.getDate();
+    var todayHour = today.getHours();
+    var todayMinute = today.getMinutes();
+    var todaySecond = today.getSeconds();
+    var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+    var diff = now - birthDay;
+    var diffDays = Math.floor(diff/days);
+    var diffHours = Math.floor((diff-(diffDays)*days)/hours);
+    var diffMinutes = Math.floor((diff-(diffDays)*days-diffHours*hours)/minutes);
+    var diffSeconds = Math.floor((diff-(diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML="小站已运行 "+diffDays+" 天 "+diffHours+" 小时 "+diffMinutes+" 分钟 "+diffSeconds+" 秒 (*´∀`)~♥";
+  }, 1000);
+</script>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
